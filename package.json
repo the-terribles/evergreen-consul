@@ -1,0 +1,38 @@
+{
+  "name": "trbl-evergreen-consul",
+  "version": "0.0.1",
+  "description": "Consul branch source directive",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test --recursive",
+    "coverage": "./node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- test --recursive"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "dependencies": {
+    "consul": "^0.25.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.5.3",
+    "sinon": "^1.17.4",
+    "trbl-evergreen": "0.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-terribles/evergreen-consul.git"
+  },
+  "keywords": [
+    "config",
+    "evergreen",
+    "consul"
+  ],
+  "author": "Richard Clayton <rlc.blacksun@gmail.com> (https://rclayton.silvrback.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/the-terribles/evergreen-consul/issues"
+  },
+  "homepage": "https://github.com/the-terribles/evergreen-consul#readme"
+}
