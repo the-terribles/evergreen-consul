@@ -64,28 +64,10 @@ describe('Consul Source Directive', function() {
     var consulDirective = new ConsulDirective();
 
     it('should throw an error if the entity/method is invalid', function(){
-      var validEntities = ['acl.get', 'acl', 'acl.list', 'acls', 'agent.members', 'members',
-        'agent.self', 'self', 'agent.check.list', 'agent.checks', 'agent.service.list',
-        'agent.services', 'catalog.datacenters', 'datacenters', 'catalog.node.list', 'node.list', 
-        'nodes', 'catalog.node.services', 'node.services', 'catalog.service.list', 'service.list', 
-        'services', 'catalog.service.nodes', 'service.nodes', 'event.list', 'events', 'health.node',
-        'health.checks', 'health.service', 'health.state', 'kv.get', 'kv', 'kv.keys', 'keys',
-        'session.get', 'session','session.node', 'session.list', 'sessions', 'status.leader', 
-        'leader', 'status.peers', 'peers'
-      ];
-
-      var generateExpression = function(method){
-        return util.format('%s?foo=bar', method);
-      };
-
-      var expressions = lodash.map(validEntities, generateExpression);
-
-      expressions.forEach(function(e){
-        expect(function(){ 
-          consulDirective.parseExpression(e);
-        }).to.not.throw(Error);
-      });
-
+      expect(function(){ consulDirective.parseExpression('acl.list'); }).to.not.throw(Error);
+      expect(function(){ 
+        consulDirective.parseExpression('acl.get?id=abc123');
+      }).to.not.throw(Error);
       expect(function(){ consulDirective.parseExpression('blah'); }).to.throw(Error);
       expect(function(){ consulDirective.parseExpression('blah.blah'); }).to.throw(Error);
       expect(function(){ consulDirective.parseExpression('blah?foo=bar'); }).to.throw(Error);
@@ -93,15 +75,27 @@ describe('Consul Source Directive', function() {
     });
 
     it('should return a method and parsed options', function(){
-      var context = consulDirective.parseExpression('acl.get?foo=bar&fooz=ball');
-      expect(context.method).to.be.an.instanceOf(Function);
-      expect(context.options).to.deep.eq({ foo: 'bar', fooz: 'ball' });
+      var context = consulDirective.parseExpression('acl.get?id=abc123');
+      expect(context.method).to.eq('acl.get');
+      expect(context.options.id).to.eq('abc123');
     });
 
     it('should allow no options to be passed', function(){
-      var context = consulDirective.parseExpression('acl.get');
-      expect(context.method).to.be.an.instanceOf(Function);
-      expect(context.options).to.deep.eq({});
+      var context = consulDirective.parseExpression('acl.list');
+      expect(context.method).to.eq('acl.list');
+      expect(context.options).to.not.be.undefined;
+      expect(context.options).to.not.be.null;
+    });
+
+    it('should throw an error if method requirements aren\'t satisfied.', function(){
+      expect(function(){ consulDirective.parseExpression('acl.get'); }).to.throw(Error);
+    });
+
+    it('should return defaults if they are not specified', function(){
+      var context = consulDirective.parseExpression('acl.list');
+      expect(context.method).to.eq('acl.list');
+      expect(context.options.ignoreStartupNodata).to.eq(false);
+      expect(context.options.mode).to.eq('once');
     });
   });
 });
