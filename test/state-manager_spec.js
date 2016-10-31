@@ -90,6 +90,7 @@ describe('StateManager', function(){
       methodMock.callsArgWith(1, null, aclResponse);
       manager.refresh();
       expect(manager.value).to.deep.eq(aclResponse);
+      expect(manager.hasConfig()).to.be.true;
     });
 
     it('should notify subscribers', function(){
@@ -189,6 +190,29 @@ describe('StateManager', function(){
       manager.startWatch();
       ee.emit('change', aclResponseUpdate);
       expect(manager.value).to.deep.eq(aclResponseUpdate);
+    });
+
+    it('should notify subscribers on change', function(){
+      manager.startWatch();
+      var successListener = sinon.mock();
+      var errorListener = sinon.mock();
+      manager.on('change', successListener);
+      manager.on('error', errorListener);
+      ee.emit('change', aclResponseUpdate);
+      expect(successListener).to.have.been.calledWith(aclResponseUpdate);
+      expect(errorListener).to.not.have.been.called;
+    });
+
+    it('should notify subscribers on error', function(){
+      manager.startWatch();
+      var successListener = sinon.mock();
+      var errorListener = sinon.mock();
+      var error = new Error();
+      manager.on('change', successListener);
+      manager.on('error', errorListener);
+      ee.emit('error', error);
+      expect(successListener).to.not.have.been.called;
+      expect(errorListener).to.have.been.calledWith(error);
     });
   });  
 });
