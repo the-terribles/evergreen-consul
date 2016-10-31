@@ -2,19 +2,20 @@
 
 var chai = require('chai'),
   expect = chai.expect,
+  sinon = require('sinon'),
+  sinonChai = require("sinon-chai"),
+  expectSinonChai = chai.use(sinonChai),
   util = require('util'),
   lodash = require('lodash'),
-  errors = require('../lib/errors'),
+  errors = require('../../lib/errors'),
   DirectiveContext = require('trbl-evergreen/lib/directive-context.js'),
   TestUtils = require('trbl-evergreen/test/utils.js'),
-  ConsulDirective = require('../lib/directive');
+  StateManager = require('../../lib/state-manager'),
+  ConsulDirective = require('../../lib/directive');
 
 describe('Consul Source Directive', function() {
-
   describe('Configuration', function(){
-
     it('should configure itself from environment variable.', function(){
-
       var directive = new ConsulDirective(null, {
         EV_CONSUL_URI: 'https://consul.the-trbl.com:18500?dc=us-east-1&consistent=true&token=abc123'
       });
@@ -29,7 +30,6 @@ describe('Consul Source Directive', function() {
     });
 
     it('should configure itself from a configuration object', function(){
-
       var directive = new ConsulDirective({
         host: 'consul2.the-trbl.com',
         port: 18600,
@@ -49,7 +49,6 @@ describe('Consul Source Directive', function() {
     });
 
     it('should provide a sensible default configuration', function(){
-
       var directive = new ConsulDirective();
 
       expect(directive.config.host).to.eq('localhost');
@@ -60,7 +59,6 @@ describe('Consul Source Directive', function() {
   });
 
   describe('Expression Parsing', function(){
-
     var consulDirective = new ConsulDirective();
 
     it('should throw an error if the entity/method is invalid', function(){
@@ -96,6 +94,80 @@ describe('Consul Source Directive', function() {
       expect(context.method).to.eq('acl.list');
       expect(context.options.ignoreStartupNodata).to.eq(false);
       expect(context.options.mode).to.eq('once');
+    });
+  });
+
+  describe('Context Handling', function(){
+    var methodMock, consul, context, consulDirective; 
+    // This is a real response (from the node-consul documentation);
+    var kvResponse = { db: 'mysql://localhost:3306' };
+    beforeEach(function(){
+      methodMock = sinon.stub();
+      consul = {
+        kv: {
+          get: methodMock,
+        },
+      };
+      context = {
+        method: 'kv.get',
+        options: { 
+          mode: 'once',
+        },
+      };
+      consulDirective = new ConsulDirective(null, null, consul);
+    });
+
+    it('should return an error if the expression cannot be parsed', function(){
+      var context = new DirectiveContext(
+        'consul', 
+        'nonexistent.function', 
+        [{ field: 'foo' }]
+      );
+      var callback = sinon.spy();
+      consulDirective.handle(context, {}, {}, callback);
+      expect(callback).to.be.calledWith(sinon.match(Error));
+    });
+
+    it('should return an error if the config item cannot be retrieved', function(){
+      var context = new DirectiveContext(
+        'consul', 
+        'kv.get?key=/database',
+        [{ field: 'db' }]
+      );
+      methodMock.callsArgWith(1, new Error('Whoops!'));
+      var callback = sinon.spy();
+      consulDirective.handle(context, {}, {}, callback);
+      expect(callback).to.be.calledWith(sinon.match(Error));
+    });
+
+    it('should allow clients to ignore startup failure', function(){
+      var context = new DirectiveContext(
+        'consul', 
+        'kv.get?key=/database&ignoreStartupNodata=true',
+        [{ field: 'db' }]
+      );
+      methodMock.callsArgWith(1, new Error('Whoops!'));
+      var callback = sinon.spy();
+      consulDirective.handle(context, {}, {}, callback);
+      expect(callback).to.be.calledWith(null, sinon.match.instanceOf(DirectiveContext));
+      var spyArgs = callback.getCall(0).args;
+      expect(spyArgs[1].value).to.be.an.instanceOf(StateManager);
+    });
+
+    it('should retrieve the config item on startup', function(){
+      var context = new DirectiveContext(
+        'consul', 
+        'kv.get?key=/database&ignoreStartupNodata=true',
+        [{ field: 'db' }]
+      );
+      methodMock.callsArgWith(1, null, kvResponse);
+      var callback = sinon.spy();
+      consulDirective.handle(context, {}, {}, callback);
+      expect(callback).to.be.calledWith(null, sinon.match.instanceOf(DirectiveContext));
+      var spyArgs = callback.getCall(0).args;
+      expect(spyArgs[1].value).to.be.an.instanceOf(StateManager);
+      var stateManager = spyArgs[1].value;
+      expect(stateManager.value).to.eq(kvResponse);
     });
   });
 });

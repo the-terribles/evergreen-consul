@@ -4,8 +4,11 @@
   "description": "Consul branch source directive",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test --recursive",
-    "coverage": "./node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- test --recursive"
+    "test": "mocha test/unit --recursive",
+    "preintegration": "docker run -d --net=host --name evconsul consul agent -dev",
+    "integration": "mocha test/integration --recursive",
+    "postintegration": "docker stop evconsul && docker rm evconsul",
+    "coverage": "./node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- test/unit --recursive"
   },
   "engines": {
     "node": ">=4.0.0"

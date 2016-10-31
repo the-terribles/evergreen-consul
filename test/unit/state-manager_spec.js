@@ -7,10 +7,10 @@ var chai = require('chai'),
   expectSinonChai = chai.use(sinonChai),
   util = require('util'),
   lodash = require('lodash'),
-  errors = require('../lib/errors'),
+  errors = require('../../lib/errors'),
   EventEmitter = require('events').EventEmitter,
   TestUtils = require('trbl-evergreen/test/utils.js'),
-  StateManager = require('../lib/state-manager');
+  StateManager = require('../../lib/state-manager');
 
 describe('StateManager', function(){
   describe('when configuring', function(){
