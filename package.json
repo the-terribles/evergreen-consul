@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha test/unit --recursive",
-    "preintegration": "docker run -d --net=host --name evconsul consul agent -dev",
+    "preintegration": "docker stop evconsul || true; docker rm evconsul || true; docker run -d --name evconsul -p 8500:8500 consul agent -dev -client 0.0.0.0; sleep 3",
     "integration": "mocha test/integration --recursive",
     "postintegration": "docker stop evconsul && docker rm evconsul",
     "coverage": "./node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- test/unit --recursive"
