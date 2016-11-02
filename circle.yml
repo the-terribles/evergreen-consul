@@ -5,7 +5,8 @@ machine:
     version: 4.0.0
 
 dependencies:
-  post: docker pull consul
+  post:
+    -  docker pull consul
 
 test:
   override:
