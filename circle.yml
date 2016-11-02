@@ -3,3 +3,11 @@ machine:
     - docker
   node:
     version: 4.0.0
+
+dependencies:
+  post: docker pull consul
+
+test:
+  override:
+    - npm test
+    - npm run integration
