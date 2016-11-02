@@ -19,7 +19,7 @@ describe('Consul Directive', function() {
     var fooValue = 'test-testy-test';
     var directive = new ConsulDirective();
     beforeEach(function(done){
-      this.timeout(5000);
+      this.timeout(8000);
       consul.kv.set('foo', fooValue, function(err){
         done(err);
       });
